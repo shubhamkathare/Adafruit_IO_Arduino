@@ -1,0 +1,111 @@
+#include <ESP8266WiFi.h>
+#include <String.h>
+#include "Adafruit_MQTT.h"
+#include "Adafruit_MQTT_Client.h"
+int irp = 5 ;  // what digital pin we're connected to
+ int irp1 = 4;  
+ int irp2 = 2;
+  int irp3 = 15;
+////////////////////////////////////////
+
+#define WLAN_SSID       "shubham007"      //mention SSID 
+#define WLAN_PASS       "shubham122"      //mention Password
+
+//////////////////////////////////////////
+
+#define AIO_SERVER      "io.adafruit.com" // server name
+#define AIO_SERVERPORT  1883     
+
+////////////////////////////////////////////       
+       
+#define IO_USERNAME  "sumi123"
+#define IO_KEY       "3d08cb03e8be4cde8004f46c83ac9823"
+/////////////////////////////////////////
+WiFiClient client;
+Adafruit_MQTT_Client mqtt(&client, AIO_SERVER, AIO_SERVERPORT, IO_USERNAME, IO_KEY);
+////////////////////////////////////
+Adafruit_MQTT_Publish  slot = Adafruit_MQTT_Publish(&mqtt, IO_USERNAME "/feeds/slot");
+Adafruit_MQTT_Publish  slota = Adafruit_MQTT_Publish(&mqtt, IO_USERNAME "/feeds/slota");
+Adafruit_MQTT_Publish  slotb = Adafruit_MQTT_Publish(&mqtt, IO_USERNAME "/feeds/slotb");
+Adafruit_MQTT_Publish  slotc = Adafruit_MQTT_Publish(&mqtt, IO_USERNAME "/feeds/slotc");
+void MQTT_connect();
+
+//////////////////////////////////////////
+void setup()
+{
+
+  Serial.begin(115200);
+
+  Serial.println(F("Adafruit MQTT demo"));
+  // Connect to WiFi access point.
+  Serial.println(); Serial.println();
+  Serial.print("Connecting to ");
+  Serial.println(WLAN_SSID);
+  WiFi.begin(WLAN_SSID, WLAN_PASS);
+  while (WiFi.status() != WL_CONNECTED) {
+    delay(500);
+    Serial.print(".");
+  }
+  Serial.println();
+  Serial.println("WiFi connected");
+  Serial.println("IP address: "); 
+  Serial.println(WiFi.localIP());
+}
+
+void loop()
+{
+  MQTT_connect();
+   // Read temperature as Celsius (the default)
+ 
+  // Read temperature as Celsius (the default)
+  float t = digitalRead(irp);
+  float t1 = digitalRead(irp1);
+  delay(200);
+  Serial.println(t);Serial.println(t1);
+  if(t==0)
+ {slot.publish("SLOT IS FREE");}
+  if(t==1)
+{ slot.publish("SLOT IS FULL");}
+   if(t1==0){
+ slota.publish("SLOT IS FREE");}
+  if(t1==1)
+{ slota.publish("SLOT IS FULL");}
+  delay(2000);
+  float t2 = digitalRead(irp2);
+  float t3 = digitalRead(irp3);
+  Serial.println(t2);Serial.println(t3);
+   if(t2==0)
+ {slotb.publish("SLOT IS FREE");}
+   if(t2==1)
+{ slotb.publish("SLOT IS FULL");}
+   if(t3==0){
+ slotc.publish("SLOT IS FREE");}
+  if(t3==1)
+{ slotc.publish("SLOT IS FULL");}
+  delay(2000);
+}
+
+void MQTT_connect() {
+  int8_t ret;
+
+  // Stop if already connected.
+  if (mqtt.connected()) {
+    return;
+  }
+
+  Serial.print("Connecting to MQTT... ");
+
+  uint8_t retries = 5;
+  while ((ret = mqtt.connect()) != 0) { // connect will return 0 for connected
+    Serial.println(mqtt.connectErrorString(ret));
+    Serial.println("Retrying MQTT connection in 5 seconds...");
+    mqtt.disconnect();
+    delay(5000);  // wait 5 seconds
+    retries--;
+    if (retries == 0) {
+      // basically die and wait for WDT to reset me
+      while (1);
+    }
+  }
+  Serial.println("MQTT Connected!");
+}
